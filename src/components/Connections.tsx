@@ -46,6 +46,7 @@ type FormattedConn = {
   host: string;
   type: string;
   network: string;
+  process: string;
   downloadSpeedCurr?: number;
   uploadSpeedCurr?: number;
 };
@@ -67,6 +68,7 @@ function filterConns(conns: FormattedConn[], keyword: string) {
           conn.rule,
           conn.type,
           conn.network,
+          conn.process,
         ].some((field) => hasSubstring(field, keyword))
       );
 }
@@ -77,7 +79,7 @@ function formatConnectionDataItem(
   now: number
 ): FormattedConn {
   const { id, metadata, upload, download, start, chains, rule, rulePayload } = i;
-  const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort } = metadata;
+  const { host, destinationPort, destinationIP, network, type, sourceIP, sourcePort, process } = metadata;
   // host could be an empty string if it's direct IP connection
   let host2 = host;
   if (host2 === '') host2 = destinationIP;
@@ -88,13 +90,14 @@ function formatConnectionDataItem(
     download,
     start: now - new Date(start).valueOf(),
     chains: chains.reverse().join(' / '),
-    rule: (rulePayload == null | rulePayload === '') ? rule : (`${rule}(${rulePayload})`),
+    rule: rule === 'GeoSite' || rule === 'GeoIP' || rule === 'RuleSet' ? `${rule} (${rulePayload})` : rule,
     ...metadata,
     host: `${host2}:${destinationPort}`,
     type: `${type}(${network})`,
     source: `${sourceIP}:${sourcePort}`,
     downloadSpeedCurr: download - (prev ? prev.download : 0),
     uploadSpeedCurr: upload - (prev ? prev.upload : 0),
+    process,
   };
   return ret;
 }
